@@ -22,7 +22,7 @@ function varargout = darjanin_GUI(varargin)
 
 % Edit the above text to modify the response to help darjanin_GUI
 
-% Last Modified by GUIDE v2.5 19-Oct-2014 00:14:29
+% Last Modified by GUIDE v2.5 19-Oct-2014 01:32:15
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -99,13 +99,13 @@ file_formats = {
 if ~isequal(i_file, 0)
     % Reading the Image file
     i_file = fullfile(i_pathname, i_file);
-    i_RGB = double(imread(i_file))/255;
-    handles.rgb = i_RGB;
-    [idx_im, handles.map] = rgb2ind(i_RGB, 256);
+    i_rgb = double(imread(i_file))/255;
+    handles.rgb = i_rgb;
+    [idx_im, handles.map] = rgb2ind(i_rgb, 256);
     handles.index_image = idx_im;
     handles.current_map = handles.map;
     % show original image in the first axes
-    imshow(i_RGB,'Parent',handles.axes1);
+    imshow(i_rgb,'Parent',handles.axes1);
     
 end
 
@@ -204,19 +204,26 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-% --- Executes on selection change in popupmenu8.
-function popupmenu8_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu8 (see GCBO)
+% --- Executes on selection change in popup_noise.
+function popup_noise_Callback(hObject, eventdata, handles)
+% hObject    handle to popup_noise (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu8 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu8
+% Hints: contents = cellstr(get(hObject,'String')) returns popup_noise contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popup_noise
+% Determine the selected noise value
+str = get(hObject, 'String');
+val = get(hObject, 'Value');
+
+handles.result = imnoise(handles.result, str{val});
+imshow(handles.result, 'Parent', handles.axes2);
+
 
 
 % --- Executes during object creation, after setting all properties.
-function popupmenu8_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu8 (see GCBO)
+function popup_noise_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popup_noise (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -284,4 +291,3 @@ imshow(handles.result, 'Parent', handles.axes2);
 
 % Update handles structure
 guidata(hObject, handles);
-
