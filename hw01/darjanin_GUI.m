@@ -22,7 +22,7 @@ function varargout = darjanin_GUI(varargin)
 
 % Edit the above text to modify the response to help darjanin_GUI
 
-% Last Modified by GUIDE v2.5 19-Oct-2014 01:32:15
+% Last Modified by GUIDE v2.5 19-Oct-2014 14:43:48
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -56,6 +56,8 @@ handles.output = hObject;
 
 handles.rgb = ones(3);
 handles.result = ones(1);
+
+handles.smooth_filter_size = 3;
 
 imshow(handles.rgb, 'Parent', handles.axes1);
 imshow(handles.result, 'Parent', handles.axes2);
@@ -113,19 +115,32 @@ end
 guidata(hObject, handles);
 
 
-% --- Executes on selection change in popupmenu3.
-function popupmenu3_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu3 (see GCBO)
+% --- Executes on selection change in popup_smooth.
+function popup_smooth_Callback(hObject, eventdata, handles)
+% hObject    handle to popup_smooth (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu3 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu3
+% Hints: contents = cellstr(get(hObject,'String')) returns popup_smooth contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popup_smooth
+str = get(hObject, 'String');
+val = get(hObject, 'Value');
 
+switch str{val};
+case 'average'
+    h = fspecial('average', handles.smooth_filter_size);
+    handles.result = imfilter(handles.result, h);
+case 'median'
+    handles.result = medfilt2(handles.result, [handles.smooth_filter_size,handles.smooth_filter_size], 'symmetric');
+end
+
+imshow(handles.result, 'Parent', handles.axes2);
+
+guidata(hObject, handles);
 
 % --- Executes during object creation, after setting all properties.
-function popupmenu3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu3 (see GCBO)
+function popup_smooth_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to popup_smooth (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -137,18 +152,24 @@ end
 
 
 
-function edit1_Callback(hObject, eventdata, handles)
-% hObject    handle to edit1 (see GCBO)
+function edit_filter_size_Callback(hObject, eventdata, handles)
+% hObject    handle to edit_filter_size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of edit1 as text
-%        str2double(get(hObject,'String')) returns contents of edit1 as a double
+% Hints: get(hObject,'String') returns contents of edit_filter_size as text
+%        str2double(get(hObject,'String')) returns contents of edit_filter_size as a double
+value = str2num(get(hObject, 'String'));
+if (value > 0)
+    handles.smooth_filter_size = value;
+end
+
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
-function edit1_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to edit1 (see GCBO)
+function edit_filter_size_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit_filter_size (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -167,6 +188,7 @@ function popupmenu2_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns popupmenu2 contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from popupmenu2
+
 
 
 % --- Executes during object creation, after setting all properties.
@@ -218,6 +240,8 @@ val = get(hObject, 'Value');
 
 handles.result = imnoise(handles.result, str{val});
 imshow(handles.result, 'Parent', handles.axes2);
+
+guidata(hObject, handles);
 
 
 
