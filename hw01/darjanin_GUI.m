@@ -103,11 +103,13 @@ if ~isequal(i_file, 0)
     i_file = fullfile(i_pathname, i_file);
     i_rgb = double(imread(i_file))/255;
     handles.rgb = i_rgb;
+    handles.result = i_rgb;
     [idx_im, handles.map] = rgb2ind(i_rgb, 256);
     handles.index_image = idx_im;
     handles.current_map = handles.map;
     % show original image in the first axes
     imshow(i_rgb,'Parent',handles.axes1);
+    imshow(i_rgb,'Parent',handles.axes2);
     
 end
 
@@ -126,17 +128,26 @@ function popup_smooth_Callback(hObject, eventdata, handles)
 str = get(hObject, 'String');
 val = get(hObject, 'Value');
 
-switch str{val};
-case 'average'
-    h = fspecial('average', handles.smooth_filter_size);
-    handles.result = imfilter(handles.result, h);
-case 'median'
-    handles.result = medfilt2(handles.result, [handles.smooth_filter_size,handles.smooth_filter_size], 'symmetric');
-end
+handles.result = smooth_im(handles.result, str{val}, handles.smooth_filter_size);
 
 imshow(handles.result, 'Parent', handles.axes2);
 
 guidata(hObject, handles);
+
+% --- Smooth image function
+function result_im = smooth_im(im, method, filter_size)
+% result_im     result
+% im            input image
+% method        method used for smoothing
+% filter_size   size of filter defined in gui, if nothing specified than 1
+switch method;
+case 'average'
+    h = fspecial('average', filter_size);
+    result_im = imfilter(im, h);
+case 'median'
+    result_im = medfilt2(im, [filter_size, filter_size], 'symmetric');
+end
+
 
 % --- Executes during object creation, after setting all properties.
 function popup_smooth_CreateFcn(hObject, eventdata, handles)
@@ -315,3 +326,5 @@ imshow(handles.result, 'Parent', handles.axes2);
 
 % Update handles structure
 guidata(hObject, handles);
+
+
