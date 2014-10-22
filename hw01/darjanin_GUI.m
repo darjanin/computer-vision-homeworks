@@ -22,7 +22,7 @@ function varargout = darjanin_GUI(varargin)
 
 % Edit the above text to modify the response to help darjanin_GUI
 
-% Last Modified by GUIDE v2.5 22-Oct-2014 12:07:10
+% Last Modified by GUIDE v2.5 22-Oct-2014 15:45:37
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -156,8 +156,10 @@ case 'average'
     result_im = imfilter(im, h);
 case 'median'
     im_size = size(im);
-    if (numel(im_size) == 3 && im_size(3) == 3)
-        im = rgb2gray(im);
+    if (numel(im_size) == 3)
+        if(im_size(3) == 3)
+            im = rgb2gray(im);
+        end
     end
     result_im = medfilt2(im, [filter_size, filter_size], 'symmetric');
 end
@@ -237,6 +239,7 @@ function slider_treshold_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 handles.edge_treshold = get(hObject, 'Value');
+set(hObject, 'String', strcat('Prah <0,1>: ', num2str(handles.edge_treshold)));
 
 handles.result = edge_detection(handles.input, handles.edge_detection_method, handles.edge_treshold);
 
@@ -277,10 +280,12 @@ function result_im = edge_detection(im, method, threshold)
 % check if the input image is in rgb or grayscale
 % if it's rgb than convert 
 im_size = size(im);
-if (im_size(3) == 3)
-    im = rgb2gray(im);
+if (numel(im_size) == 3)
+    if (im_size(3) == 3)
+        im = rgb2gray(im);
+    end
 end
-
+    
 switch method;
 case 'sobel' 
     Sx = [1 2 1; 0 0 0; -1 -2 -1];
@@ -298,8 +303,9 @@ H = conv2(double(im), Sx, 'same');
 % Vertical direction
 V = conv2(double(im), Sy, 'same');
 E = sqrt(H.*H + V.*V);
-result_im = uint8((E > threshold) * 255);
-
+% transform threshold to interval <0,1> using max value of E
+max_e = max(E(:));
+result_im = uint8((E > threshold*max_e) * 255);
 
 
 % --- Executes during object creation, after setting all properties.
