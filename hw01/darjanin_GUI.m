@@ -54,12 +54,21 @@ function darjanin_GUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for darjanin_GUI
 handles.output = hObject;
 
+% 'zero' variables saved in handles structure
 handles.rgb = ones(3);
 handles.input = ones(1);
 handles.result = ones(1);
 
+% default smooth smoothing filter size set to 3
 handles.smooth_filter_size = 3;
+% default edge detection threshold
 handles.edge_treshold = 0.1;
+
+% default edge detection method is set to 'sobel' if we start changing
+% slider value
+handles.edge_detection_method = 'sobel';
+
+handles.smooth_method = 'average';
 
 imshow(handles.input, 'Parent', handles.axes1);
 imshow(handles.result, 'Parent', handles.axes2);
@@ -109,16 +118,14 @@ if ~isequal(i_file, 0)
     handles.rgb = i_rgb;
     handles.input = i_rgb;
     handles.result = i_rgb;
-    [idx_im, handles.map] = rgb2ind(i_rgb, 256);
-    handles.index_image = idx_im;
-    handles.current_map = handles.map;
+%     [idx_im, handles.map] = rgb2ind(i_rgb, 256);
+%     handles.index_image = idx_im;
+%     handles.current_map = handles.map;
     % show original image in the first axes
     imshow(handles.input, 'Parent', handles.axes1);
     imshow(handles.input, 'Parent', handles.axes2);
-    
 end
 
-% Update handles structure
 guidata(hObject, handles);
 
 
@@ -130,9 +137,9 @@ function popup_smooth_Callback(hObject, eventdata, handles)
 
 str = get(hObject, 'String');
 val = get(hObject, 'Value');
+handles.smooth_method = str{val};
 
-handles.result = smooth_im(handles.result, str{val}, handles.smooth_filter_size);
-
+handles.result = smooth_im(handles.result, handles.smooth_method, handles.smooth_filter_size);
 imshow(handles.result, 'Parent', handles.axes2);
 
 guidata(hObject, handles);
@@ -148,6 +155,10 @@ case 'average'
     h = fspecial('average', filter_size);
     result_im = imfilter(im, h);
 case 'median'
+    im_size = size(im);
+    if (numel(im_size) == 3 && im_size(3) == 3)
+        im = rgb2gray(im);
+    end
     result_im = medfilt2(im, [filter_size, filter_size], 'symmetric');
 end
 
@@ -174,6 +185,9 @@ if (value > 0)
     handles.smooth_filter_size = value;
 end
 
+handles.result = smooth_im(handles.result, handles.smooth_method, handles.smooth_filter_size);
+imshow(handles.result, 'Parent', handles.axes2);
+
 guidata(hObject, handles);
 
 
@@ -198,7 +212,7 @@ function popup_noise_Callback(hObject, eventdata, handles)
 str = get(hObject, 'String');
 val = get(hObject, 'Value');
 
-handles.result = imnoise(handles.result, str{val});
+handles.result = imnoise(handles.input, str{val});
 imshow(handles.result, 'Parent', handles.axes2);
 
 guidata(hObject, handles);
@@ -224,7 +238,9 @@ function slider_treshold_Callback(hObject, eventdata, handles)
 
 handles.edge_treshold = get(hObject, 'Value');
 
-disp(handles.edge_treshold);
+handles.result = edge_detection(handles.input, handles.edge_detection_method, handles.edge_treshold);
+
+imshow(handles.result, 'Parent', handles.axes2);
 
 guidata(hObject, handles);
 
@@ -246,17 +262,24 @@ function popup_edge_detection_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%imshow(edge(handles.result,'sobel'), 'Parent', handles.axes2);
 str = get(hObject, 'String');
 val = get(hObject, 'Value');
+handles.edge_detection_method = str{val};
 
-handles.result = edgeDetection(handles.result, str{val}, handles.edge_treshold);
+handles.result = edge_detection(handles.input, handles.edge_detection_method, handles.edge_treshold);
 
 imshow(handles.result, 'Parent', handles.axes2);
 
 guidata(hObject, handles);
 
-function result_im = edgeDetection(im, method, threshold)
+function result_im = edge_detection(im, method, threshold)
+
+% check if the input image is in rgb or grayscale
+% if it's rgb than convert 
+im_size = size(im);
+if (im_size(3) == 3)
+    im = rgb2gray(im);
+end
 
 switch method;
 case 'sobel' 
@@ -270,14 +293,12 @@ case 'roberts'
     Sy = [0 1; -1 0];
 end
 
-
+% Horizontal direction
 H = conv2(double(im), Sx, 'same');
+% Vertical direction
 V = conv2(double(im), Sy, 'same');
 E = sqrt(H.*H + V.*V);
-whos E;
-edge_image = uint8((E > threshold) * 255);
-
-result_im = edge_image;
+result_im = uint8((E > threshold) * 255);
 
 
 
@@ -322,6 +343,7 @@ gray = rgb2gray(handles.rgb);
 handles.input = gray;
 handles.result = gray;
 
+% Show image in both axes
 imshow(handles.input, 'Parent', handles.axes1);
 imshow(handles.result, 'Parent', handles.axes2);
 
@@ -337,6 +359,7 @@ function menu_item_rgb_Callback(hObject, eventdata, handles)
 handles.input = handles.rgb;
 handles.result = handles.rgb;
 
+% Show image in both axes
 imshow(handles.input, 'Parent', handles.axes1);
 imshow(handles.result, 'Parent', handles.axes2);
 
