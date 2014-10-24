@@ -62,17 +62,17 @@ handles.result = ones(1);
 
 % default smooth smoothing filter size set to 3
 handles.smooth_filter_size = 3;
-% default edge detection threshold
-handles.edge_treshold = 0.1;
+% default edge detection threshold set to 0.22
+handles.edge_treshold = 0.22;
 
 % default noise method set to gaussian
 handles.noise_method = 'gaussian';
-% default edge detection method is set to 'sobel' if we start changing
-% slider value
+% default edge detection method is set to 'sobel'
 handles.edge_detection_method = 'sobel';
 % default smooth method is set to 'average'
 handles.smooth_method = 'average';
 
+% show empty images in axes
 imshow(handles.input, 'Parent', handles.axes1);
 imshow(handles.result, 'Parent', handles.axes2);
 
@@ -110,12 +110,13 @@ if ~isequal(i_file, 0)
     % Reading the Image file
     i_file = fullfile(i_pathname, i_file);
     i_rgb = double(imread(i_file))/255;
+    % Set global handles variables with loaded image 
     handles.rgb = i_rgb;
     handles.gray = rgb2gray(handles.rgb);
     handles.input = i_rgb;
     handles.result = i_rgb;
 
-    % show loaded image in the first axes
+    % show loaded image in the axes1
     imshow(handles.input, 'Parent', handles.axes1);
     imshow(ones(1), 'Parent', handles.axes2);
 end
@@ -134,12 +135,6 @@ case 'average'
     h = fspecial('average', filter_size);
     result_im = imfilter(im, h);
 case 'median'
-    im_size = size(im);
-    if (numel(im_size) == 3)
-        if(im_size(3) == 3)
-            im = rgb2gray(im);
-        end
-    end
     result_im = medfilt2(im, [filter_size, filter_size], 'symmetric');
 end
 
@@ -149,10 +144,13 @@ function popup_smooth_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% load selected method name and save it in handles
 str = get(hObject, 'String');
 val = get(hObject, 'Value');
 handles.smooth_method = str{val};
 
+% generate noisy_im that will be smoothed
+% method for noise is last method setted in noise popup
 noisy_im = imnoise(handles.gray, handles.noise_method);
 handles.result = smooth_im(noisy_im, handles.smooth_method, handles.smooth_filter_size);
 
@@ -178,11 +176,15 @@ function edit_filter_size_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% when editext value is number larger than zero set it for
+% smooth_filter_size in handles
 value = str2double(get(hObject, 'String'));
 if (value > 0)
     handles.smooth_filter_size = value;
 end
 
+% generate noisy_im that will be smoothed
+% method for noise is last method setted in noise popup
 noisy_im = imnoise(handles.gray, handles.noise_method);
 handles.result = smooth_im(noisy_im, handles.smooth_method, handles.smooth_filter_size);
 
@@ -210,11 +212,14 @@ function popup_noise_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 % Determine the selected noise value
 
+% load the last selected noise method; save it in noise_method in handles
 str = get(hObject, 'String');
 val = get(hObject, 'Value');
 handles.noise_method = str{val};
 
+% generate noisy image from gray image
 handles.result = imnoise(handles.gray, handles.noise_method);
+
 imshow(handles.gray, 'Parent', handles.axes1);
 imshow(handles.result, 'Parent', handles.axes2);
 
@@ -238,12 +243,13 @@ function slider_treshold_Callback(hObject, eventdata, handles)
 % hObject    handle to slider_treshold (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+% on change of the treshold value apply edge_detection again
 
 handles.edge_treshold = get(hObject, 'Value');
 
 handles.result = edge_detection(handles.gray, handles.edge_detection_method, handles.edge_treshold);
 
-imshow(handles.gray, 'Parent', handles.axes2);
+imshow(handles.gray, 'Parent', handles.axes1);
 imshow(handles.result, 'Parent', handles.axes2);
 
 guidata(hObject, handles);
@@ -266,13 +272,15 @@ function popup_edge_detection_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% load the edget detection method and save it to the
+% edge_detection_method in handles
 str = get(hObject, 'String');
 val = get(hObject, 'Value');
 handles.edge_detection_method = str{val};
 
 handles.result = edge_detection(handles.gray, handles.edge_detection_method, handles.edge_treshold);
 
-imshow(handles.gray, 'Parent', handles.axes2);
+imshow(handles.gray, 'Parent', handles.axes1);
 imshow(handles.result, 'Parent', handles.axes2);
 
 guidata(hObject, handles);
@@ -318,38 +326,15 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in btn_grayscale.
-function btn_grayscale_Callback(hObject, eventdata, handles)
-% hObject    handle to btn_grayscale (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-gray = rgb2gray(handles.rgb);
-handles.result = gray;
-
-imshow(handles.result, 'Parent', handles.axes2);
-
-% Update handles structure
-guidata(hObject, handles);
-
-
-% --------------------------------------------------------------------
-function menu_edit_image_Callback(hObject, eventdata, handles)
-% hObject    handle to menu_edit_image (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
 % --------------------------------------------------------------------
 function menu_item_grayscale_Callback(hObject, eventdata, handles)
 % hObject    handle to menu_item_grayscale (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.input = handles.rgb;
-handles.result = handles.gray;
 
 % Show image in both axes
-imshow(handles.input, 'Parent', handles.axes1);
-imshow(handles.result, 'Parent', handles.axes2);
+imshow(handles.rgb, 'Parent', handles.axes1);
+imshow(handles.gray, 'Parent', handles.axes2);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -360,12 +345,10 @@ function menu_item_rgb_Callback(hObject, eventdata, handles)
 % hObject    handle to menu_item_rgb (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-handles.input = handles.rgb;
-handles.result = handles.rgb;
 
-% Show image in both axes
-imshow(handles.input, 'Parent', handles.axes1);
-imshow(handles.result, 'Parent', handles.axes2);
+% Show rgb image in the axes1 and second one set to empty
+imshow(handles.rgb, 'Parent', handles.axes1);
+imshow(ones(1), 'Parent', handles.axes2);
 
 % Update handles structure
 guidata(hObject, handles);
