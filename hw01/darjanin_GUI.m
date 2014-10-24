@@ -54,7 +54,7 @@ function darjanin_GUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for darjanin_GUI
 handles.output = hObject;
 
-% 'zero' variables saved in handles structure
+% 'one' variables saved in handles structure
 handles.rgb = ones(3);
 handles.gray = ones(1);
 handles.input = ones(1);
